@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h1>Добавить привычку</h1>
+
+    <form action="{{ url_for('personal') }}" method="POST">
+        <input type="hidden" name="habit_id" id="habit_id" value="">
+        <div>
+            <label for="habit_name">Название привычки:</label>
+            <input type="text" id="habit_name" name="habit_name" required>
+        </div>
+        <div>
+            <label for="habit_description">Описание привычки:</label>
+            <textarea id="habit_description" name="habit_description"></textarea>
+        </div>
+        <div>
+            <button type="submit">Сохранить</button>
+        </div>
+    </form>
+
+    <h2>Список привычек</h2>
+    <ul>
+        {% for habit in habits %}
+            <li>
+                <strong>{{ habit.name }}</strong>: {{ habit.description }}
+                <button onclick="editHabit({{ habit.id }}, '{{ habit.name }}', '{{ habit.description }}')">Редактировать</button>
+                <div class="grid" id="grid-{{ habit.id }}">
+                    {% for i in range(12) %}
+                        {% for j in range(7) %}
+                            <div class="cell" onclick="toggleCell(this)"></div>
+                        {% endfor %}
+                    {% endfor %}
+                </div>
+            </li>
+        {% else %}
+            <li>Нет сохраненных привычек.</li>
+        {% endfor %}
+    </ul>
+
+    <script>
+        function editHabit(id, name, description) {
+            document.getElementById('habit_id').value = id;
+            document.getElementById('habit_name').value = name;
+            // Здесь можно добавить логику для заполнения других полей, если нужно
+        }
+
+        function toggleCell(cell) {
+            if (cell.style.backgroundColor === 'orange') {
+                cell.style.backgroundColor = 'white';
+            } else {
+                cell.style.backgroundColor = 'orange';
+            }
+        }
+    </script>
+
+    <style>
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(12, 30px); /* 12 колонок */
+            grid-template-rows: repeat(7, 30px); /* 7 строк */
+            gap: 2px; /* Промежуток между ячейками */
+            margin-top: 10px;
+        }
+        .cell {
+            width: 30px;
+            height: 30px;
+            background-color: white;
+            border: 1px solid #ccc;
+            cursor: pointer;
+        }
+    </style>
+{% endblock %}
