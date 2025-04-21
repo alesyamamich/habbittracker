@@ -1,72 +1,159 @@
 {% extends "base.html" %}
-
 {% block content %}
-    <h1>Добавить привычку</h1>
-
-    <form action="{{ url_for('personal') }}" method="POST">
-        <input type="hidden" name="habit_id" id="habit_id" value="">
-        <div>
-            <label for="habit_name">Название привычки:</label>
-            <input type="text" id="habit_name" name="habit_name" required>
-        </div>
-        <div>
-            <label for="habit_description">Описание привычки:</label>
-            <textarea id="habit_description" name="habit_description"></textarea>
-        </div>
-        <div>
-            <button type="submit">Сохранить</button>
-        </div>
-    </form>
-
-    <h2>Список привычек</h2>
-    <ul>
-        {% for habit in habits %}
-            <li>
-                <strong>{{ habit.name }}</strong>: {{ habit.description }}
-                <button onclick="editHabit({{ habit.id }}, '{{ habit.name }}', '{{ habit.description }}')">Редактировать</button>
-                <div class="grid" id="grid-{{ habit.id }}">
-                    {% for i in range(12) %}
-                        {% for j in range(7) %}
-                            <div class="cell" onclick="toggleCell(this)"></div>
-                        {% endfor %}
-                    {% endfor %}
-                </div>
-            </li>
-        {% else %}
-            <li>Нет сохраненных привычек.</li>
-        {% endfor %}
-    </ul>
-
-    <script>
-        function editHabit(id, name, description) {
-            document.getElementById('habit_id').value = id;
-            document.getElementById('habit_name').value = name;
-            // Здесь можно добавить логику для заполнения других полей, если нужно
-        }
-
-        function toggleCell(cell) {
-            if (cell.style.backgroundColor === 'orange') {
-                cell.style.backgroundColor = 'white';
-            } else {
-                cell.style.backgroundColor = 'orange';
-            }
-        }
-    </script>
-
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Личный кабинет</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <style>
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(12, 30px); /* 12 колонок */
-            grid-template-rows: repeat(7, 30px); /* 7 строк */
-            gap: 2px; /* Промежуток между ячейками */
-            margin-top: 10px;
-        }
         .cell {
-            width: 30px;
-            height: 30px;
-            background-color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
             border: 1px solid #ccc;
+            display: inline-block;
+            margin: 2px;
             cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .cell.active {
+            background-color: orange;
         }
     </style>
+</head>
+<body>
+    <div class="container mt-5">
+        <div id="success-message" class="alert alert-success mt-4" style="display: none;">
+        Вы приобрели новую привычку, так держать! Продолжайте в том же духе! :)
+    </div>
+        <h2>Добавить привычку</h2>
+        <form method="POST" class="mb-4">
+            <div class="form-group">
+                <label for="habit_name">Название привычки</label>
+                <input type="text" class="form-control" id="habit_name" name="habit_name" required>
+            </div>
+            <div class="form-group">
+                <label for="habit_description">Описание привычки</label>
+                <input type="text" class="form-control" id="habit_description" name="habit_description">
+            </div>
+            <button type="submit" class="btn btn-primary">Добавить привычку</button>
+        </form>
+
+        <h2>Ваши привычки</h2>
+        <ul class="list-group">
+            {% for habit in habits %}
+                <li class="list-group-item">
+                    <strong>{{ habit.name }}</strong>
+                    <p>{{ habit.description }}</p>
+                    <div class="habit-grid">
+                        <table class="table table-bordered">
+                            <tbody>
+                                {% for week in range(7) %}
+                                    <tr>
+                                        {% for day in range(12) %}
+                                            <td class="cell {% if habit.colored_cells and habit.colored_cells[week * 12 + day] == '1' %}active{% endif %}" onclick="toggleCell(this, {{ habit.id }}, {{ week * 12 + day }})"></td>
+                                        {% endfor %}
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <input type="hidden" id="colored_cells_{{ habit.id }}" name="colored_cells" value="{{ habit.colored_cells }}">
+                    <form method="POST" action="{{ url_for('delete_habit', habit_id=habit.id) }}" style="display:inline;">
+                        <button type="submit" class="btn btn-danger btn-sm">Удалить</button>
+                    </form>
+                    <button class="btn btn-secondary btn-sm" data-toggle="modal" data-target="#editModal{{ habit.id }}">Редактировать</button>
+
+                    <div class="modal fade" id="editModal{{ habit.id }}" tabindex="-1" role="dialog" aria-labelledby="editModalLabel{{ habit.id }}" aria-hidden="true">
+                        <div class="modal-dialog" role="document">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="editModalLabel{{ habit.id }}">Редактировать привычку</h5>
+                                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                        <span aria-hidden="true">&times;</span>
+                                    </button>
+                                </div>
+                                <form method="POST" action="{{ url_for('update_habit', habit_id=habit.id) }}">
+                                    <div class="modal-body">
+                                        <div class="form-group">
+                                            <label for="habit_name">Название привычки</label>
+                                            <input type="text" class="form-control" id="habit_name" name="habit_name" value="{{ habit.name }}" required>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="habit_description">Описание привычки</label>
+                                            <input type="text" class="form-control" id="habit_description" name="habit_description" value="{{ habit.description }}">
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Закрыть</button>
+                                        <button type="submit" class="btn btn-primary">Сохранить изменения</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </li>
+            {% endfor %}
+        </ul>
+</div>
+
+
+    <script>
+
+        function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+  function toggleCell(cell, habitId, cellIndex) {
+    cell.classList.toggle('active');
+
+    let coloredCellsInput = document.getElementById('colored_cells_' + habitId);
+    let coloredCells = coloredCellsInput.value.split('');
+
+    coloredCells[cellIndex] = cell.classList.contains('active') ? '1' : '0';
+    coloredCellsInput.value = coloredCells.join('');
+
+
+    if (coloredCells.every(cell => cell === '1')) {
+            document.getElementById('success-message').style.display = 'block';
+        } else {
+            document.getElementById('success-message').style.display = 'none';
+        }
+
+
+    fetch('/update_habit/' + habitId, {
+    method: 'POST',
+    headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCookie('csrf_token') // если используете CSRF защиту
+    },
+    body: JSON.stringify({ colored_cells: coloredCellsInput.value })
+})
+.then(response => {
+    if (!response.ok) {
+        throw new Error('Network response was not ok');
+    }
+    return response.json();
+})
+.then(data => {
+    console.log('Success:', data);
+})
+.catch((error) => {
+    console.error('Error:', error);
+});
+}
+    </script>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 {% endblock %}

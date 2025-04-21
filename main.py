@@ -12,17 +12,15 @@ from flask_login import current_user, login_user, logout_user, LoginManager
 from flask_migrate import Migrate
 
 
-
-# Определяем базовую директорию
 basedir = os.path.abspath(os.path.dirname(__file__))
 
-# Конфигурация приложения
+
 class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'alesia228Yourish8'
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
                               'sqlite:///' + os.path.join(basedir, 'app.db')
 
-# Инициализация приложения и базы данных
+
 app = Flask(__name__)
 app.config.from_object(Config)
 db = SQLAlchemy(app)
@@ -36,7 +34,6 @@ def load_user(user_id):
     return User.query.get(int(user_id))
 
 
-# Форма для логина
 class LoginForm(FlaskForm):
     username = StringField('Логин', validators=[DataRequired()])
     password = PasswordField('Пароль', validators=[DataRequired()])
@@ -50,7 +47,6 @@ class RegisterForm(FlaskForm):
     submit = SubmitField('Зарегистрироваться')
 
 
-# Модель пользователя
 class User(db.Model):
     id: so.Mapped[int] = so.mapped_column(primary_key=True)
     username: so.Mapped[str] = so.mapped_column(sa.String(64), index=True, unique=True, nullable=False)
@@ -61,19 +57,15 @@ class User(db.Model):
         return '<User {}>'.format(self.username)
 
     def set_password(self, password: str):
-        """Хэширует пароль и сохраняет его в password_hash."""
         self.password_hash = generate_password_hash(password)
 
     def check_password(self, password: str) -> bool:
-        """Проверяет, соответствует ли введенный пароль хэшированному паролю."""
         return check_password_hash(self.password_hash, password)
 
     def is_authenticated(self):
-        """Проверяет, аутентифицирован ли пользователь."""
-        return True  # Этот метод всегда возвращает True для аутентифицированного пользователя
+        return True
 
     def get_id(self):
-        """Возвращает уникальный идентификатор пользователя как строку."""
         return str(self.id)
 
     def is_active(self):
@@ -86,15 +78,13 @@ class Habit(db.Model):
     colored_cells = db.Column(db.String(500), nullable=True)
 
 
-    # Создание всех таблиц
 with app.app_context():
     db.create_all()
 
 
-# Маршрутизация
 @app.route('/')
 def index():
-  return render_template("base.html")
+  return render_template("index.html")
 
 
 @app.route('/register', methods=['GET', 'POST'])
@@ -136,21 +126,21 @@ def personal():
 
     if request.method == 'POST':
         habit_id = request.form.get('habit_id')
-        if habit_id:  # Если habit_id присутствует, значит, мы редактируем привычку
+        if habit_id:
             habit = Habit.query.get(habit_id)
             if habit:
                 habit.name = request.form.get('habit_name')
                 habit.description = request.form.get('habit_description')
-                habit.colored_cells = request.form.get('colored_cells')  # Сохраняем закрашенные ячейки
+                habit.colored_cells = request.form.get('colored_cells')
                 db.session.commit()
-        else:  # Если habit_id отсутствует, значит, мы создаем новую привычку
+        else:
             habit_name = request.form.get('habit_name')
             habit_description = request.form.get('habit_description')
-            new_habit = Habit(name=habit_name, description=habit_description)
+            colored_cells = request.form.get('colored_cells', '0' * 84)
+            new_habit = Habit(name=habit_name, description=habit_description, colored_cells=colored_cells)
             db.session.add(new_habit)
             db.session.commit()
 
-    # Получаем все привычки из базы данных
     habits = Habit.query.all()
     return render_template('personal.html', habits=habits)
 
@@ -170,12 +160,22 @@ def update_habit(habit_id):
     if habit is None:
         return jsonify({'error': 'Habit not found'}), 404
 
-    data = request.get_json()
-    habit.colored_cells = data.get('colored_cells', '')
-    db.session.commit()  # Сохраняем изменения в базе данных
+    # Check if the request is JSON
+    if request.is_json:
+        data = request.get_json()
+        colored_cells = data.get('colored_cells')
+        habit.colored_cells = colored_cells
+    else:
+        # Handle form data
+        habit_name = request.form.get('habit_name')
+        habit_description = request.form.get('habit_description')
+        habit.name = habit_name
+        habit.description = habit_description
 
-    return jsonify({'success': True})
-
+    # Commit the changes to the database
+    db.session.commit()
+    return redirect(url_for('personal'))
+    return jsonify({'message': 'Habit updated successfully'}), 200
 
 
 @app.route('/logout')
