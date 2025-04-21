@@ -96,7 +96,7 @@ def register():
             flash('Пользователь с таким логином уже существует. Пожалуйста, выберите другой логин.')
             return redirect(url_for('register'))
         user = User(username=form.username.data, email=form.email.data)
-        user.set_password(form.password.data)  # Хэшируем пароль
+        user.set_password(form.password.data)
         db.session.add(user)
         db.session.commit()
         flash('Вы успешно зарегистрированы!')
@@ -109,7 +109,7 @@ def login():
     form = LoginForm()
     if form.validate_on_submit():
         user = db.session.scalar(sa.select(User).where(User.username == form.username.data))
-        if user is None or not user.check_password(form.password.data):  # Проверяем пароль
+        if user is None or not user.check_password(form.password.data):
             flash('Неверный логин или пароль!')
             return redirect(url_for('login'))
         else:
