@@ -15,12 +15,6 @@ from flask_migrate import Migrate
 basedir = os.path.abspath(os.path.dirname(__file__))
 
 
-class Config:
-    SECRET_KEY = os.environ.get('SECRET_KEY') or 'alesia228Yourish8'
-    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
-                              'sqlite:///' + os.path.join(basedir, 'app.db')
-
-
 app = Flask(__name__)
 app.config.from_object(Config)
 db = SQLAlchemy(app)
@@ -187,4 +181,4 @@ def logout():
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run()

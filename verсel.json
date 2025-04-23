@@ -1,0 +1,5 @@
+{
+  "builds": [{"src":  "main.py", "use": "@versel/python" }],
+  "routes": [{"src":  "/:path*", "dest": "main.py"}],
+  "cleanUrls": true
+}
