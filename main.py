@@ -164,13 +164,11 @@ def update_habit(habit_id):
         colored_cells = data.get('colored_cells')
         habit.colored_cells = colored_cells
     else:
-        # Handle form data
         habit_name = request.form.get('habit_name')
         habit_description = request.form.get('habit_description')
         habit.name = habit_name
         habit.description = habit_description
 
-    # Commit the changes to the database
     db.session.commit()
     return redirect(url_for('personal'))
     return jsonify({'message': 'Habit updated successfully'}), 200

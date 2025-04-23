@@ -8,14 +8,14 @@
       {{ form.username.label }}<br>
       {{ form.username(size=32) }}<br>
       {% for error in form.username.errors %}
-        <span style="color: red;">[Это поле должно быть заполнено]</span>
+        <span style="color: red;">Это поле должно быть заполнено</span>
       {% endfor %}
     </p>
     <p>
       {{ form.password.label }}<br>
       {{ form.password(size=32) }}<br>
       {% for error in form.password.errors %}
-        <span style="color: red;">[Это поле должно быть заполнено]</span>
+        <span style="color: red;">Это поле должно быть заполнено</span>
       {% endfor %}
       <div>
             <a href="{{ url_for('register') }}">Еще нет аккаунта? Зарегистрироваться</a>
